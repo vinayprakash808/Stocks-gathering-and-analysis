@@ -1,0 +1,44 @@
+install.packages("quantmod")
+library(quanmod)
+require(quantmod)
+library(gdata)
+allstocks <- combine(YESBANK.NS,ONGC.NS)
+#getSymbols(c("GMRINFRA.NS"), src = "yahoo", from = "2018-01-01", to = "2019-07-03")
+Yesbank <- as.data.frame(getSymbols(c("YESBANK.NS"), src = "yahoo", from = "2018-01-01", to = "2019-07-04",verbose = F, auto.assign = F))
+Yesbank$Profit <- Yesbank$YESBANK.NS.High - Yesbank$YESBANK.NS.Low
+Yesbank$Date <- row.names(Yesbank)
+
+PURVA <- as.data.frame(getSymbols(c("PURVA.NS"), src = "yahoo", from = "2018-01-01", to = "2019-07-02",verbose = F, auto.assign = F))
+PURVA$Profit <- PURVA$PURVA.NS.High - PURVA$PURVA.NS.Low
+PURVA$Date <- row.names(PURVA)
+PURVA$Date <- as.Date(PURVA$Date)
+
+IRB <- as.data.frame(getSymbols(c("IRB.NS"), src = "yahoo", from = "2018-01-01", to = "2019-07-02",verbose = F, auto.assign = F))
+IRB$Profit <- IRB$IRB.NS.High - IRB$IRB.NS.Low
+IRB$Date <- row.names(IRB)
+IRB$Date <- as.Date(IRB$Date)
+
+BHEL <- as.data.frame(getSymbols(c("BHEL.NS"), src = "yahoo", from = "2018-01-01", to = "2019-07-02",verbose = F, auto.assign = F))
+BHEL$Profit <- BHEL.NS$BHEL.NS.High - BHEL.NS$BHEL.NS.Low
+BHEL$Date <- row.names(BHEL)
+BHEL$Date <- as.Date(BHEL$Date)
+
+ONGC <- as.data.frame(getSymbols(c("ONGC.NS"), src = "yahoo", from = "2018-01-01", to = "2019-07-03",verbose = F, auto.assign = F))
+ONGC$Profit <- ONGC$ONGC.NS.High - ONGC$ONGC.NS.Low
+ONGC$Date <- row.names(ONGC)
+ONGC$Date <- as.Date(ONGC$Date)
+
+#two_com <- c("YESBANK.NS","PURVA.NS")
+library(dplyr)
+ticker <- read.csv(file.choose())
+two_com <- as.character(ticker$Ticker)
+df1 <- as.data.frame(getSymbols(two_com, src = "yahoo", from = "2018-01-01", to = "2019-07-04",verbose = F, auto.assign = T))
+as<-combine(BHARTIARTL.NS,ASHOKLEY.NS,AUROPHARMA.NS,AREXMIS.BO,SANWARIA.NS,ALMONDZ.NS)
+newcol <- c("open","high","low","close","volume","adjusted","source")
+colnames(as) <- newcol
+as$date <- row.names(as)
+as$date1 <- substr(as$date,2,11)
+as$date <- NULL
+as$date<- as.Date(as$date1, "%Y.%m.%d")
+as$date1 <- NULL
+rownames(as) <- NULL
