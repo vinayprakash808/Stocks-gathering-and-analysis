@@ -1,5 +1,5 @@
 install.packages("quantmod")
-library(quanmod)
+library(quantmod)
 require(quantmod)
 library(gdata)
 allstocks <- combine(YESBANK.NS,ONGC.NS)
