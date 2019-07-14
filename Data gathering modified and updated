@@ -1,0 +1,16 @@
+install.packages("quantmod")
+library(quantmod)
+require(quantmod)
+library(gdata)
+library(dplyr)
+
+ticker <- read.csv(file.choose())
+ticker <- head(ticker,n=2)
+two_com <- as.character(ticker$Ticker)
+df1 <- as.data.frame(getSymbols(two_com, src = "yahoo", from = "2019-01-01", to = Sys.Date()-1,verbose = F, auto.assign = T))
+#paste(two_com,collapse = ",")#copy this result to the below code
+BHARTIARTL <- fortify.zoo(BHARTIARTL.NS)
+ASHOKLEY <- fortify.zoo(ASHOKLEY.NS)
+newcol <- c("Date","open","high","low","close","volume","adjusted")
+allstocks <-combine(BHARTIARTL,ASHOKLEY)
+
