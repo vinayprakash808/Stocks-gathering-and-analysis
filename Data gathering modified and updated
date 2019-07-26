@@ -5,8 +5,6 @@ require(quantmod)
 library(gdata)
 library(magrittr)
 library(ggplot2)
-install.packages("multipanelfigure")
-library(multipanelfigure)
 
 #ticker <- read.csv(file.choose())
 #ticker <- head(ticker,n=2)
