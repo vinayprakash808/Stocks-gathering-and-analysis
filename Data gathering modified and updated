@@ -1,16 +1,45 @@
+# Difference between previous day close and next day high
 install.packages("quantmod")
 library(quantmod)
 require(quantmod)
 library(gdata)
-library(dplyr)
+library(magrittr)
+library(ggplot2)
+install.packages("multipanelfigure")
+library(multipanelfigure)
 
-ticker <- read.csv(file.choose())
-ticker <- head(ticker,n=2)
-two_com <- as.character(ticker$Ticker)
-df1 <- as.data.frame(getSymbols(two_com, src = "yahoo", from = "2019-01-01", to = Sys.Date()-1,verbose = F, auto.assign = T))
+#ticker <- read.csv(file.choose())
+#ticker <- head(ticker,n=2)
+two_com <- c("YESBANK.NS","SAIL.NS","ONGC.NS","PURVA.NS")
+#two_com <- as.character(ticker$Ticker)
+df1 <- as.data.frame(getSymbols(two_com, src = "yahoo", from = "2019-01-01", to = Sys.Date(),verbose = F, auto.assign = T))
 #paste(two_com,collapse = ",")#copy this result to the below code
-BHARTIARTL <- fortify.zoo(BHARTIARTL.NS)
-ASHOKLEY <- fortify.zoo(ASHOKLEY.NS)
+YESBANK <- fortify.zoo(YESBANK.NS)
+SAIL <- fortify.zoo(SAIL.NS)
+ONGC <- fortify.zoo(ONGC.NS)
+PURVA <- fortify.zoo(PURVA.NS)
 newcol <- c("Date","open","high","low","close","volume","adjusted")
-allstocks <-combine(BHARTIARTL,ASHOKLEY)
-
+colnames(YESBANK) <- newcol
+colnames(SAIL) <- newcol
+colnames(ONGC) <- newcol
+colnames(PURVA) <- newcol
+allstocks <- combine(YESBANK,SAIL,ONGC,PURVA) #if dplyr is installed this doesnot work
+allstocks$MaxProfit <- round(allstocks$high - allstocks$low,digits = 1)
+allstocks$day <- weekdays(allstocks$Date)
+allstocks$month <- months(allstocks$Date)
+#aggregate(allstocks$MaxProfit, allstocks[,c("day","source")], FUN=summary)
+#allstocks$pclose_chigh <- round(c(NA, allstocks$close[-nrow(allstocks)]) - allstocks$high,digits = 1)*(-1)
+allstocks$lagsource <- c(NA,as.character(allstocks$source[-nrow(allstocks)]))
+allstocks <- data.frame(allstocks,stringsAsFactors = F)
+allstocks$log1 <- allstocks$lagsource == allstocks$source
+allstocks$pclose_chigh1 <- ifelse(allstocks$log1=="TRUE",round(c(NA, allstocks$close[-nrow(allstocks)]) - allstocks$high,digits = 1)*(-1)," ")
+allstocks$pclose_chigh1 <- as.numeric(as.character(allstocks$pclose_chigh1))
+#qplot(Date, pclose_chigh1, data = allstocks, colour = factor(source))
+#qplot(pclose_chigh1,data = allstocks, geom = "density",colour = day)
+YESBANK <- allstocks[allstocks$source=="YESBANK",]
+qplot(pclose_chigh1,data = YESBANK, geom = "density",colour = day)
+shapiro.test(YESBANK$pclose_chigh1[YESBANK$day=="Tuesday"])
+shapiro.test(YESBANK$pclose_chigh1[YESBANK$day=="Wednesday"])
+shapiro.test(YESBANK$pclose_chigh1[YESBANK$day=="Thursday"])
+shapiro.test(YESBANK$pclose_chigh1[YESBANK$day=="Monday"])
+shapiro.test(YESBANK$pclose_chigh1[YESBANK$day=="Friday"])
