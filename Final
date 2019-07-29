@@ -1,0 +1,175 @@
+# Difference between previous day close and next day high
+#remove.packages("dplyr")
+#install.packages("quantmod")
+library(quantmod)
+require(quantmod)
+library(gdata)
+library(magrittr)
+
+library(ggplot2)
+#install.packages("gridExtra")
+library("gridExtra")
+#install.packages("multipanelfigure")
+#library(multipanelfigure)
+#ticker <- read.csv(file.choose())
+#ticker <- head(ticker,n=2)
+two_com <- c("MARUTI.NS")
+#two_com <- as.character(ticker$Ticker)
+df1 <- as.data.frame(getSymbols(two_com, src = "yahoo", from = "2018-01-01", to = Sys.Date(),verbose = F, auto.assign = T))
+#paste(two_com,collapse = ",")#copy this result to the below code
+allstocks <- fortify.zoo(MARUTI.NS)
+#SAIL <- fortify.zoo(SAIL.NS)
+#ONGC <- fortify.zoo(ONGC.NS)
+#PURVA <- fortify.zoo(PURVA.NS)
+newcol <- c("Date","open","high","low","close","volume","adjusted")
+colnames(allstocks) <- newcol
+#colnames(SAIL) <- newcol
+#colnames(ONGC) <- newcol
+#colnames(PURVA) <- newcol
+#allstocks <- combine(YESBANK,SAIL,ONGC,PURVA) #if dplyr is installed this doesnot work
+allstocks$MaxProfit <- round(allstocks$high - allstocks$low,digits = 1)
+allstocks$day <- weekdays(allstocks$Date)
+allstocks$month <- months(allstocks$Date)
+#aggregate(allstocks$MaxProfit, allstocks[,c("day","source")], FUN=summary)
+#allstocks$pclose_chigh <- round(c(NA, allstocks$close[-nrow(allstocks)]) - allstocks$high,digits = 1)*(-1)
+#allstocks$lagsource <- c(NA,as.character(allstocks$source[-nrow(allstocks)])). This is for multiple stocks
+#allstocks <- data.frame(allstocks,stringsAsFactors = F)
+#allstocks$log1 <- allstocks$lagsource == allstocks$source
+#allstocks$pclose_chigh1 <- ifelse(allstocks$log1=="TRUE",round(c(NA, allstocks$close[-nrow(allstocks)]) - allstocks$high,digits = 1)*(-1)," ")
+allstocks$pclose_chigh1 <- round(c(NA, allstocks$close[-nrow(allstocks)]) - allstocks$high,digits = 1)*(-1)
+allstocks$pclose_chigh1 <- as.numeric(as.character(allstocks$pclose_chigh1))
+allstocks$copen_cclose <- round(allstocks$open-allstocks$close,digits = 1)
+#qplot(Date, pclose_chigh1, data = allstocks, colour = factor(source))
+#qplot(pclose_chigh1,data = allstocks, geom = "density",colour = day)
+#YESBANK <- allstocks[allstocks$source=="YESBANK",]
+library(shiny)
+ui <- fluidPage(
+  tabsetPanel(tabPanel("tab",sidebarLayout(
+    sidebarPanel(h6(selectInput("plots","plots",choices = c("Null","pclose_chigh","copen_cclose"))),
+                 h6(selectInput("day","Day",choices = c("Null","Monday","Tuesday","Wednesday","Thursday","Friday"))),
+                 h6(selectInput("operations","Operations",choices = c("Null","Summary"))),
+                 em(verbatimTextOutput("ST")),
+                 fluidRow(column(h6(numericInput("Monday","Monday",min = -10, max = 100, value = 0)),width = 7,offset = 0),
+                 br(),
+                 column(h6(actionButton("goButton1", "pclose_chigh")),width = 5,offset = 0),
+                 br(),
+                 column(em(verbatimTextOutput("ntext1")),width = 10,offset = 0)),
+                 fluidRow(column(h6(numericInput("Tuesday","Tuesday",min = 0, max = 100, value = 0)),width = 7,offset = 0),
+                 br(),
+                 column(h6(actionButton("goButton2", "pclose_chigh")),width = 5,offset = 0),
+                 br(),
+                 column(em(verbatimTextOutput("ntext2")),width = 10,offset = 0)),
+                 fluidRow(column(h6(numericInput("Wednesday","Wednesday",min = 0, max = 100, value = 0)),width = 7,offset = 0),
+                          br(),
+                          column(h6(actionButton("goButton3", "pclose_chigh")),width = 5,offset = 0),
+                          br(),
+                          column(em(verbatimTextOutput("ntext3")),width = 10,offset = 0)),
+                 fluidRow(column(h6(numericInput("Thursday","Thursday",min = 0, max = 100, value = 0)),width = 7,offset = 0),
+                          br(),
+                          column(h6(actionButton("goButton4", "pclose_chigh")),width = 5,offset = 0),
+                          br(),
+                          column(em(verbatimTextOutput("ntext4")),width = 10,offset = 0)),
+                 fluidRow(column(h6(numericInput("Friday","Friday",min = 0, max = 100, value = 0)),width = 7,offset = 0),
+                          br(),
+                          column(h6(actionButton("goButton5", "pclose_chigh")),width = 5,offset = 0),
+                          br(),
+                          column(em(verbatimTextOutput("ntext5")),width = 10,offset = 0)),
+                 h6(textInput("Tuesday","Tuesday")),width = 4),
+    mainPanel(h5(textOutput("Name")),
+              h6(verbatimTextOutput("message1")),
+              h6(plotOutput("message3")),
+              h6(plotOutput("message2")))
+  )))
+)
+server <- function(input, output, session) {
+  observeEvent(input$plots, {
+    if (input$plots == "pclose_chigh") {
+      output$message3 <- renderPlot(qplot(pclose_chigh1, data = allstocks, geom = "density", colour = day))
+    } else if (input$plots == "copen_cclose") {
+      output$message2 <- renderPlot(qplot(copen_cclose, data = allstocks, geom = "density", colour = day))  
+    }
+  })
+  
+  output$Name <- renderText(
+    paste("The company is",two_com)
+  )
+  
+  output$ST <- renderPrint(
+    {
+      if(input$day == "Monday")
+      {
+        shapiro.test(allstocks$pclose_chigh1[allstocks$day=="Monday"])
+      } else if(input$day == "Tuesday")
+      {
+        shapiro.test(allstocks$pclose_chigh1[allstocks$day=="Tuesday"])
+      } else if(input$day == "Wednesday")
+      {
+        shapiro.test(allstocks$pclose_chigh1[allstocks$day=="Wednesday"])
+      } else if(input$day == "Thursday")
+      {
+        shapiro.test(allstocks$pclose_chigh1[allstocks$day=="Thursday"])
+      } else if(input$day == "Friday")
+      {
+        shapiro.test(allstocks$pclose_chigh1[allstocks$day=="Friday"])
+      }
+    }
+  )
+  output$message1 <- renderPrint({
+    if(input$operations == "Summary")
+    {
+      summary(allstocks)
+    } 
+  })
+  ntext1 <- eventReactive(
+    input$goButton1,{
+      1-pnorm(input$Monday, mean=mean(allstocks$pclose_chigh1[allstocks$day=="Monday"],na.rm = TRUE), sd=sd(allstocks$pclose_chigh1[allstocks$day=="Monday"],na.rm = TRUE))
+    }
+  )
+  output$ntext1 <- renderPrint(
+    {
+      ntext1()
+    }
+  )
+  ntext2 <- eventReactive(
+    input$goButton2,{
+      1-pnorm(input$Tuesday, mean=mean(allstocks$pclose_chigh1[allstocks$day=="Tuesday"],na.rm = TRUE), sd=sd(allstocks$pclose_chigh1[allstocks$day=="Tuesday"],na.rm = TRUE))
+    }
+  )
+  output$ntext2 <- renderPrint(
+    {
+      ntext2()
+    }
+  )
+  ntext3 <- eventReactive(
+    input$goButton3,{
+      1-pnorm(input$Wednesday, mean=mean(allstocks$pclose_chigh1[allstocks$day=="Wednesday"],na.rm = TRUE), sd=sd(allstocks$pclose_chigh1[allstocks$day=="Wednesday"],na.rm = TRUE))
+    }
+  )
+  output$ntext3 <- renderPrint(
+    {
+      ntext3()
+    }
+  ) 
+  ntext4 <- eventReactive(
+    input$goButton4,{
+      1-pnorm(input$Thursday, mean=mean(allstocks$pclose_chigh1[allstocks$day=="Thursday"],na.rm = TRUE), sd=sd(allstocks$pclose_chigh1[allstocks$day=="Thursday"],na.rm = TRUE))
+    }
+  )
+  output$ntext4 <- renderPrint(
+    {
+      ntext4()
+    }
+  ) 
+  ntext5 <- eventReactive(
+    input$goButton5,{
+      1-pnorm(input$Friday, mean=mean(allstocks$pclose_chigh1[allstocks$day=="Friday"],na.rm = TRUE), sd=sd(allstocks$pclose_chigh1[allstocks$day=="Friday"],na.rm = TRUE))
+    }
+  )
+  output$ntext5 <- renderPrint(
+    {
+      ntext5()
+    }
+  )
+}
+
+shinyApp(ui, server)
